@@ -2,13 +2,13 @@
 
 setlocal enabledelayedexpansion
 
-set _num=1
+set count=1
 
 if "%~1"=="" (
     echo Try '%~n0 /?' for more information.&echo:
     goto :shows
 ) else if "%~1"=="/?" (
-    goto :help
+    goto :usage
 ) else if "%~1"=="/reset" (
     set /p <nul="Resetting path values to default..."
     set reset=1
@@ -22,35 +22,35 @@ if "%~1"=="" (
     set _flag=0
 ) else (
     echo %~n0: '%1' invalid command. see '%~n0 /?' for usage.
-    goto :end
+    goto :omega
 )
 
-if "%~2"=="" (
+if "%~2" equ "" (
     echo %~n0: Path value must be specified.
-    goto :end
+    goto :omega
 )
 
-set _str=%~2
+set _args=%~2
 
 if /i "%~2"=="/file" (
-    if not exist "%userprofile%\.%~n0" (
+    if not exist "%userprofile%\.pathls" (
         echo ; To use this file, rename it to .%~n0
         echo ; support signs %% and quotes ^"
         echo %~dp0
         echo ;"%%USERPROFILE%%\Desktop"
-    )>"%userprofile%\.%~n0"
+    )>"%userprofile%\.pathls"
     if "%~3"=="" (
-        echo %~n0: Require .%~n0 file, Default: %userprofile%\.%~n0
+        echo %~n0: Require .%~n0 file, Default: %userprofile%\.pathls
         echo then try: %~n0 [/a or /d] /file "%%userprofile%%\.%~n0"
-        goto :end
+        goto :omega
     ) else if exist "%~f3\" (
         echo %~n0: No '.%~n0' file on '%~f3'.
-        echo Default: %userprofile%\.%~n0
-        goto :end
+        echo Default: %userprofile%\.pathls
+        goto :omega
     ) else if not exist "%~f3" (
         echo %~n0: '%~f3' file not found.
-        echo Default: %userprofile%\.%~n0
-        goto :end
+        echo Default: %userprofile%\.pathls
+        goto :omega
     ) else (
         for /f "usebackq tokens=*" %%e in ("%~f3") do (
             if exist "%%~fe\" (
@@ -59,30 +59,31 @@ if /i "%~2"=="/file" (
                 echo %~n0: '%%~fe' directory not found.
             )
         )
-        set /p "_str="<"%~f3.tmp"
+        set /p "_args="<"%~f3.tmp"
         del /f /q "%~f3.tmp"
     )
 )
-set _temp=%path%
 
-:: append suffix semicolon; env var path
-if ";" neq "%_temp:~-1%" set _temp=%_temp%;
+set _path=%path%
+
 :: remove prefix ;semicolon cmd line
-if ";" equ "%_str:~0,1%" set _str=%_str:~1%
+if ";"=="%_args:~0,1%" set _args=%_args:~1%
 :: remove suffix semicolon; cmd line
-if ";" equ "%_str:~-1%" set _str=%_str:~0,-1%
+if ";"=="%_args:~-1%" set _args=%_args:~0,-1%
+:: append suffix semicolon; env var path
+if not ";"=="%_path:~-1%" set _path=%_path%;
 
-:loop
-for /f "tokens=%_num% delims=;" %%i in ("%_str%") do (
-    set _temp=!_temp:%%~i;=!& set /a _num+=1& goto :loop
+:alpha
+for /f "tokens=%count% delims=;" %%i in ("%_args%") do (
+    set _path=!_path:%%~i;=!& set /a count+=1& goto :alpha
 )
-if %_flag% lss 1 (
-    endlocal & set "PATH=%_temp%"
+if %_flag% equ 1 (
+    endlocal & set "path=%_path%%_args%;"
 ) else (
-    endlocal & set "PATH=%_temp%%_str%;"
+    endlocal & set "path=%_path%"
 )
 
-:end
+:omega
 endlocal
 exit /b %errorlevel%
 
@@ -90,48 +91,52 @@ exit /b %errorlevel%
 for %%i in (
     "HKLM\System\CurrentControlSet\Control\Session Manager\Environment"
     "HKCU\Environment"
-) do for /f "skip=2 tokens=2,*" %%a in ('reg query %%i /v Path') do (
-    call set /p <nul="%%~b;">>"%temp%\%~n0.tmp"
+) do for /f "skip=2 tokens=2,*" %%a in (
+    'reg query %%i /v Path'
+) do (
+    call set /p <nul="%%~b;">>"%~f0.tmp"
 )
-set /p "_temp="<"%temp%\%~n0.tmp" & set "_temp=%_temp:;;=;%"
-del /f /q "%temp%\%~n0.tmp" & if defined reset (
-    endlocal & set "Path=%_temp%"
+set /p "_path="<"%~f0.tmp"
+set "_path=%_path:;;=;%"
+del /f /q "%~f0.tmp"
+if not defined reset (
+    endlocal & call "%~f0" /a "%_path%"
 ) else (
-    endlocal & call "%~f0" /a "%_temp%"
+    endlocal & set "path=%_path%"
 )
 echo: done.
-goto :end
+goto :omega
 
 :shows
-for /f "tokens=%_num% delims=;" %%i in ("%Path%") do (
+for /f "tokens=%count% delims=;" %%i in ("%Path%") do (
     if exist "%%~i" (echo %%i) else (
-        echo [91mError:%_num% %%i[0m
+        echo [91mError:%count% %%i[0m
     )
-    set /a _num+=1& goto :shows
+    set /a count+=1& goto :shows
 )
-echo:& set /a _num-=1
-echo Found %_num% entries in environment variable PATH
+echo:& set /a count-=1
+echo Found %count% entries in environment variable PATH
 @rem echo %path:;=&echo:%
-goto :end
+goto :omega
 
-:help
-echo Add or remove directory from current session path values
+:usage
+echo Adds or removes directory from current session path values
 echo:
 echo Usage: %~n0 [options] [/file ^<filename^> ^| directory[;...]]
 echo:
 echo   /file ^<filename^>  Specifies a file from the path list
 echo   directory[;...]   Specifies the directory names, if multiple
-echo                     directory are separated by semicolons ^(;^).
+echo                     directory are separated by semicolons ';'.
 echo:
 echo Options:
-echo   /a or /d     Adds or removes a directory name from the path.
-echo   /refresh     Re-fresh/load path values from registry.
-echo   /reset       Resets all path values to default.
+echo   /a or /d          Adds or removes a directory name from the path.
+echo   /refresh          Re-fresh/load path values from registry.
+echo   /reset            Resets all path values to default.
 echo:
 echo The special characters that require quotes are: ^( space ^) ;
 echo:
 echo Examples:
 echo   %~nx0 /d "x:\foo bar\;C:\food"
 echo   %~nx0 /a "%ProgramFiles(x86)%\GnuWin32\bin"
-echo   %~nx0 /a /file "%userprofile%\.%~n0"
-goto :end
+echo   %~nx0 /a /file "%userprofile%\.pathls"
+goto :omega
