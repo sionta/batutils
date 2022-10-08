@@ -1,6 +1,5 @@
 @if "%~1"=="" (
-    @echo Usage: %~n0 [/?] ^| [exec] [args...]
-    @exit /b
+    @echo Usage: %~n0 [/?] ^| [exec] [args...] & exit /b
 ) else @if "%~1"=="/?" (
     @echo Execute elevated from command line.
     @echo.
@@ -21,8 +20,8 @@
 )
 
 @setlocal
-@set app=%1
 @set cmd=%*
+@set app=%1
 @cscript //nologo "%~s0?.wsf" //job:VBElev %*
 @exit /b %errorlevel%
 <job id="VBElev">
@@ -30,9 +29,8 @@
         Set Shell = CreateObject("Shell.Application")
         Set WShell = WScript.CreateObject("WScript.Shell")
         Set ProcEnv = WShell.Environment("PROCESS")
-        cmd = ProcEnv("cmd")
-        app = ProcEnv("app")
-        args= Right(cmd,(Len(cmd)-Len(app)))
+        cmd = ProcEnv("cmd"): app = ProcEnv("app")
+        args= Right(cmd,(Len(cmd) - Len(app)))
         Shell.ShellExecute app, args, "", "runas"
         Set ProcEnv = Nothing
         Set WShell = Nothing
