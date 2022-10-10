@@ -18,16 +18,16 @@ if not defined ALIASES (
         echo;== Starting with '= EQUALS' will not be executed.
         echo;e.=explorer .
         echo;np=notepad $1
-        echo;== Aliases similar like as on Unix.
-        echo;= source=call $*
-        echo;= which=where $1 2$Gnul
-        echo;= touch=type nul$G$1
-        echo;= grep=findstr $*
-        echo;= cat=type $*
+        echo;== Uncomment if you want a similar alias on Unix.
+        echo;= .=call $*
+        echo;= cp=copy $*
         echo;= ls=dir /d /o $*
         echo;= ll=dir /o $*
-        echo;= cp=copy $*
         echo;= mv=move $*
+        echo;= cat=type $*
+        echo;= grep=findstr $*
+        echo;= which=where $1 2$Gnul
+        echo;= touch=echo /$G$1:touch
     )>"%USERPROFILE%\.aliases"
 )
 
@@ -38,7 +38,7 @@ if /i "%~1"=="/f" (
         echo %~n0: Specify a file to load into alias.
         exit /b
     ) else dir /b/a:d "%~f2" >nul 2>&1 && (
-        echo %~n0: This '%~f2' directory not a file.
+        echo %~n0: Cannot found '%~f2' file.
         exit /b
     ) || if not exist "%~f2" (
         echo %~n0: The '%~f2' file not found.
@@ -55,8 +55,7 @@ if /i "%~1"=="/f" (
         echo Alias name '%~2' does not match.
         endlocal & exit /b
     )
-    set "alias=%~2"
-    doskey %~2 =
+    doskey %~2 =& set "alias=%~2"
     goto :FILTER
 ) else if /i "%~1"=="/reload" (
     if not exist "%ALIASES%" (
