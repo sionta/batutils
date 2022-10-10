@@ -15,9 +15,6 @@ if "%~1"=="" (
 		exit /b
 	)
 	shift /1
-) else (
-	echo %~n0: '%1' invalid command.
-	exit /b
 )
 
 if not exist "%~dp1" mkdir "%~dp1"
