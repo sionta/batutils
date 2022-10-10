@@ -18,9 +18,9 @@ if "%~1"=="" (
     shift /1
 )
 
-for %%i in (SHA1,MD5,MD2,MD4,SHA256,SHA384,SHA512) do (
-    if not defined hash if /i "%~1"=="%%i" set hash=%%i
-)
+for %%i in (
+    SHA1,MD5,MD2,MD4,SHA256,SHA384,SHA512
+) do if /i "%~1"=="%%i" set hash=%%i
 
 if not defined hash set hash=SHA1
 
