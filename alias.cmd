@@ -82,14 +82,14 @@ if ["%tests%"] neq ["%alias%"] (
 )
 
 :FILTER
-findstr /vi /rc:"^%alias%.=*" "%ALIASES%">"%ALISES%.tmp"
-if defined value echo !alias!=!value!>>"%ALISES%.tmp"
-type "%ALISES%.tmp">"%ALIASES%"
+findstr /vi /rc:"^%alias%.=*" "%ALIASES%">"%ALIASES%.tmp"
+if defined value echo !alias!=!value!>>"%ALIASES%.tmp"
+type "%ALIASES%.tmp">"%ALIASES%"
 
 :RELOAD
-findstr /vrc:"\<=\>" /c:"^=." "%ALIASES%">"%ALISES%.tmp"
-doskey /macrofile="%ALISES%.tmp"
-del /f /q "%ALISES%.tmp"
+findstr /vrc:"\<=\>" /c:"^=." "%ALIASES%">"%ALIASES%.tmp"
+doskey /macrofile="%ALIASES%.tmp"
+del /f /q "%ALIASES%.tmp"
 if defined verbose echo; %verbose%
 endlocal & exit /b %errorlevel%
 
@@ -131,7 +131,7 @@ echo;
 echo   %~nx0 fo
 echo       Display containing alias names
 echo;
-echo   %~nx0 /d foo
+echo   %~nx0 /d=foo
 echo       Remove the aliases name
 exit /b
 
